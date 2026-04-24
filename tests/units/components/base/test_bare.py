@@ -1,0 +1,25 @@
+import pytest
+from reflex_base.vars.base import Var
+from reflex_components_core.base.bare import Bare
+
+STATE_VAR = Var(_js_expr="default_state.name")
+
+
+@pytest.mark.parametrize(
+    ("contents", "expected"),
+    [
+        ("hello", '"hello"'),
+        ("{}", '"{}"'),
+        (None, '""'),
+        (STATE_VAR, "default_state.name"),
+    ],
+)
+def test_fstrings(contents, expected):
+    """Test that fstrings are rendered correctly.
+
+    Args:
+        contents: The contents of the component.
+        expected: The expected output.
+    """
+    comp = Bare.create(contents).render()
+    assert comp["contents"] == expected
