@@ -239,12 +239,7 @@ def initialize_package_json():
 
 
 def _compile_vite_config(config: Config):
-    # base must have exactly one trailing slash
-
-    if getattr(config, "assets_mode", "absolute") == "relative":
-        base = "./"
-    else:
-        base = config.prepend_frontend_path("/")
+    base = config.get_public_base()
 
     return templates.vite_config_template(
         base=base,

@@ -37,6 +37,9 @@ from reflex.state import BaseState, _resolve_delta
 from reflex.utils import path_ops
 from reflex.utils.prerequisites import get_web_dir
 
+from reflex.config import get_config
+import reflex as rx
+
 # To re-export this function.
 merge_imports = imports.merge_imports
 
@@ -521,9 +524,18 @@ def create_document_root(
 
     # Add theme preload script as the very first component to prevent FOUC
     theme_preload_components = [preload_color_theme()]
+    base_component = None
+
+    config = get_config()
+
+    if getattr(config, "uri_path", ""):
+        base_component = rx.el.base(
+            href=f"/{config.uri_path.strip('/')}/"
+        )
 
     head_components = [
         *theme_preload_components,
+        *( [base_component] if base_component else [] ),
         *(head_components or []),
         *maybe_head_components,
         *always_head_components,

@@ -317,7 +317,9 @@ class Config(BaseConfig):
 
     # Track whether the app name has already been validated for this Config instance.
     _app_name_is_valid: bool = dataclasses.field(default=False, repr=False)
-
+    
+    uri_path: str = ""
+    
     assets_mode: Literal["absolute", "relative"] = "absolute"
 
     def _post_init(self, **kwargs):
@@ -584,6 +586,18 @@ class Config(BaseConfig):
                         dedupe=True,
                     )
         return updated_values
+
+    def get_public_base(self) -> str:
+        if getattr(self, "assets_mode", "absolute") == "relative":
+            return "./"
+        if self.uri_path:
+            return f"/{self.uri_path.strip('/')}/"
+        return "/"
+
+    def get_base_tag(self) -> str:
+        if self.uri_path:
+            return f'<base href="/{self.uri_path.strip("/")}/">'
+        return ""
 
     def get_event_namespace(self) -> str:
         """Get the path that the backend Websocket server lists on.
