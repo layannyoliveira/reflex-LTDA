@@ -243,7 +243,24 @@ def initialize_package_json():
 
 
 def _compile_vite_config(config: Config):
-    base = config.get_public_base()
+    """
+    Vite config ajustado para:
+    - funcionar com subpath (uri_path)
+    - evitar duplicação de assets
+    - usar base relativa quando necessário
+    """
+
+    # 🔥 REGRA PRINCIPAL
+    # Se usar subpath → usa relativo
+    if getattr(config, "uri_path", ""):
+        base = "./"
+
+    # fallback (sem subpath)
+    elif getattr(config, "assets_mode", "absolute") == "relative":
+        base = "./"
+
+    else:
+        base = "/"
 
     return templates.vite_config_template(
         base=base,

@@ -470,76 +470,71 @@ def create_document_root(
     html_lang: str | None = None,
     html_custom_attrs: dict[str, Var | Any] | None = None,
 ) -> Component:
-    """Create the document root.
-
-    Args:
-        head_components: The components to add to the head.
-        html_lang: The language of the document, will be added to the html root element.
-        html_custom_attrs: custom attributes added to the html root element.
-
-    Returns:
-        The document root.
-    """
     from reflex.utils.misc import preload_color_theme
     from reflex.config import get_config
-    from reflex.components.el import Base
+
+    config = get_config()
 
     existing_meta_types = set()
 
     for component in head_components or []:
         if isinstance(component, Meta):
-            if component.char_set is not None:  # pyright: ignore[reportAttributeAccessIssue]
+            if component.char_set is not None:
                 existing_meta_types.add("char_set")
             if (
-                (name := component.name) is not None  # pyright: ignore[reportAttributeAccessIssue]
+                (name := component.name) is not None
                 and name.equals(Var.create("viewport"))
             ):
                 existing_meta_types.add("viewport")
 
-    # Always include the framework meta and link tags.
+    # BASE PATH (ESSENCIAL)
+    base_prefix = ""
+    if getattr(config, "uri_path", ""):
+        base_prefix = f"/{config.uri_path.strip('/')}/"
+
+    # BASE TAG (resolve paths relativos no browser)
+    base_component = None
+    if base_prefix:
+        base_component = rx.el.base(href=base_prefix)
+
+    # GLOBAL CSS (CORRIGIDO)
+    global_styles_href = Var(
+        "reflexGlobalStyles",
+        _var_data=VarData(
+            imports={
+                # IMPORTANTE: SEM /assets fixo
+                "$/styles/__reflex_global_styles.css?url": [
+                    ImportVar(tag="reflexGlobalStyles", is_default=True)
+                ]
+            }
+        ),
+    )
+
     always_head_components = [
         ReactMeta.create(),
         Link.create(
             rel="stylesheet",
             type="text/css",
-            href=Var(
-                "reflexGlobalStyles",
-                _var_data=VarData(
-                    imports={
-                        "$/styles/__reflex_global_styles.css?url": [
-                            ImportVar(tag="reflexGlobalStyles", is_default=True)
-                        ]
-                    }
-                ),
-            ),
+            href=global_styles_href,
         ),
         Links.create(),
     ]
+
     maybe_head_components = []
-    # Only include these if the user has not specified them.
+
     if "char_set" not in existing_meta_types:
         maybe_head_components.append(Meta.create(char_set="utf-8"))
+
     if "viewport" not in existing_meta_types:
         maybe_head_components.append(
             Meta.create(name="viewport", content="width=device-width, initial-scale=1")
         )
 
-    # Add theme preload script as the very first component to prevent FOUC
     theme_preload_components = [preload_color_theme()]
-    
-    config = get_config()
-    base_component = None
-
-    uri = (getattr(config, "uri_path", "") or "").strip().strip("/")
-
-    if uri:
-        base_component = Base.create(
-            href=f"/{uri}/"
-        )
 
     head_components = [
-        *( [base_component] if base_component else [] ),
         *theme_preload_components,
+        *( [base_component] if base_component else [] ),
         *(head_components or []),
         *maybe_head_components,
         *always_head_components,
@@ -559,8 +554,7 @@ def create_document_root(
     hooks = html_component._get_all_hooks()
     if hooks:
         raise ValueError(
-            "You cannot use stateful components or hooks in the document root. "
-            "Check your head components."
+            "You cannot use stateful components or hooks in the document root."
         )
 
     return html_component
