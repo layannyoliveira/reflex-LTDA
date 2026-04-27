@@ -196,6 +196,10 @@ class BaseConfig:
     backend_port: int | None = None
 
     backend_path: str = ""
+    
+    uri_path: str = ""
+    
+    assets_mode: str = "absolute"
 
     api_url: str = f"http://localhost:{constants.DefaultPorts.BACKEND_PORT}"
 
