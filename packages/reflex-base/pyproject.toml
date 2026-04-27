@@ -1,6 +1,6 @@
 [project]
 name = "reflex-base"
-dynamic = ["version"]
+version = "0.8.28.post2"
 description = "Core types for the Reflex framework."
 readme = "README.md"
 authors = [{ name = "Khaleel Al-Adhami", email = "khaleel@reflex.dev" }]
