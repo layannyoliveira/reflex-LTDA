@@ -37,7 +37,7 @@ from reflex.state import BaseState, _resolve_delta
 from reflex.utils import path_ops
 from reflex.utils.prerequisites import get_web_dir
 
-from reflex.config import get_config
+from reflex_base.config import get_config
 import reflex as rx
 
 # To re-export this function.
@@ -481,6 +481,8 @@ def create_document_root(
         The document root.
     """
     from reflex.utils.misc import preload_color_theme
+    from reflex.config import get_config
+    from reflex.components.el import Base
 
     existing_meta_types = set()
 
@@ -524,22 +526,25 @@ def create_document_root(
 
     # Add theme preload script as the very first component to prevent FOUC
     theme_preload_components = [preload_color_theme()]
+    
+    config = get_config()
     base_component = None
 
-    config = get_config()
+    uri = (getattr(config, "uri_path", "") or "").strip().strip("/")
 
-    if getattr(config, "uri_path", ""):
-        base_component = rx.el.base(
-            href=f"/{config.uri_path.strip('/')}/"
+    if uri:
+        base_component = Base.create(
+            href=f"/{uri}/"
         )
 
     head_components = [
-        *theme_preload_components,
         *( [base_component] if base_component else [] ),
+        *theme_preload_components,
         *(head_components or []),
         *maybe_head_components,
         *always_head_components,
     ]
+
     html_component = Html.create(
         Head.create(*head_components),
         Body.create(
@@ -550,10 +555,14 @@ def create_document_root(
         lang=html_lang or "en",
         custom_attrs=html_custom_attrs or {},
     )
+
     hooks = html_component._get_all_hooks()
     if hooks:
-        msg = "You cannot use stateful components or hooks in the document root. Check your head components."
-        raise ValueError(msg)
+        raise ValueError(
+            "You cannot use stateful components or hooks in the document root. "
+            "Check your head components."
+        )
+
     return html_component
 
 
