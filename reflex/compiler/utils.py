@@ -502,8 +502,7 @@ def create_document_root(
         "reflexGlobalStyles",
         _var_data=VarData(
             imports={
-                # IMPORTANTE: SEM /assets fixo
-                "$/styles/__reflex_global_styles.css?url": [
+                "./styles/__reflex_global_styles.css?url": [
                     ImportVar(tag="reflexGlobalStyles", is_default=True)
                 ]
             }
@@ -512,11 +511,11 @@ def create_document_root(
 
     always_head_components = [
         ReactMeta.create(),
-        Link.create(
-            rel="stylesheet",
-            type="text/css",
-            href=global_styles_href,
-        ),
+            Link.create(
+                rel="stylesheet",
+                type="text/css",
+                href=global_styles_href,
+            ),
         Links.create(),
     ]
 
